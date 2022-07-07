@@ -1,0 +1,22 @@
+<Project>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)build\key.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Authors>jeffkl</Authors>
+    <Copyright>© Jeff Kluge. All rights reserved.</Copyright>
+    <PackageProjectUrl>https://github.com/jeffkl/msbuild-case-fixer</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/jeffkl/msbuild-case-fixer</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="$(MSBuildThisFileDirectory)build\xunit.runner.json"
+             CopyToOutputDirectory="PreserveNewest"
+             Condition="'$(IsTestProject)' == 'true'"/>
+    <PackageReference Include="EnvironmentAbstractions.BannedApiAnalyzer" PrivateAssets="All" />
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory).editorconfig" Visible="false" />
+  </ItemGroup>
+</Project>

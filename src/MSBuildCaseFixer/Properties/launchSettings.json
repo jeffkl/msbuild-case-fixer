@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "MSBuildCaseFixer": {
+      "commandName": "Project",
+      "commandLineArgs": "--project D:\\msbuildsdks\\MSBuildSdks.sln",
+      "workingDirectory": "D:\\msbuildsdks"
+    }
+  }
+}
