@@ -1,31 +1,22 @@
 ﻿using Microsoft.Build.Evaluation;
-using System;
 
 namespace MSBuildCaseFixer
 {
     internal sealed class MSBuildResolvedImport : IMSBuildResolvedImport
     {
-        private readonly object _obj;
+        private readonly ResolvedImport _resolvedImport;
 
-        internal MSBuildResolvedImport(ResolvedImport? resolvedImport)
+        internal MSBuildResolvedImport(ResolvedImport resolvedImport)
         {
-            if (resolvedImport is null)
-            {
-                throw new ArgumentException(nameof(resolvedImport));
-            }
-
-            _obj = resolvedImport;
-
-            EvaluatedProjectPath = resolvedImport.Value.ImportedProject.FullPath;
-
-            UnevaluatedProjectPath = resolvedImport.Value.ImportingElement.Project;
-
-            ContainingProject = resolvedImport.Value.ImportingElement.ContainingProject.FullPath;
+            _resolvedImport = resolvedImport;
         }
 
-        public string EvaluatedProjectPath { get; set; }
+        public string ContainingProject => _resolvedImport.ImportingElement.ContainingProject.FullPath;
 
-        public string UnevaluatedProjectPath { get; set; }
-        public string ContainingProject { get; }
+        public string EvaluatedProjectPath => _resolvedImport.ImportedProject.FullPath;
+
+        public string UnevaluatedProjectPath => _resolvedImport.ImportingElement.Project;
+
+        public string GetElementLocation() => _resolvedImport.ImportingElement.Location.ToString();
     }
 }

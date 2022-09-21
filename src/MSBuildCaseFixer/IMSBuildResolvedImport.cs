@@ -19,5 +19,11 @@
         /// Gets the unevaluated path to the project.
         /// </summary>
         string UnevaluatedProjectPath { get; }
+
+        /// <summary>
+        /// Gets the location of the element as a string.
+        /// </summary>
+        /// <returns>The element location as a string.</returns>
+        string GetElementLocation();
     }
 }

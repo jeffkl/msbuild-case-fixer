@@ -43,5 +43,7 @@ namespace MSBuildCaseFixer
         /// <param name="name">The name of the metadata.</param>
         /// <returns>The evaluated value of the metadata if one exists, otherwise <see cref="string.Empty" />.</returns>
         string GetMetadataValue(string name);
+
+        string GetElementLocation();
     }
 }

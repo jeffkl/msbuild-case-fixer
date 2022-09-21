@@ -6,8 +6,17 @@ using System.Text;
 
 namespace MSBuildCaseFixer
 {
+    /// <summary>
+    /// Represents extension methods used by this assembly.
+    /// </summary>
     internal static class ExtensionMethods
     {
+        /// <summary>
+        /// Gets the current item's full path in the correct case according to the file system.
+        /// </summary>
+        /// <param name="projectItem">The current <see cref="ProjectItem" />.</param>
+        /// <param name="fileSystem">An <see cref="IFileSystem" /> to use when getting information from the file system.</param>
+        /// <returns></returns>
         public static string GetFullPathInCorrectCase(this ProjectItem projectItem, IFileSystem fileSystem)
         {
             try

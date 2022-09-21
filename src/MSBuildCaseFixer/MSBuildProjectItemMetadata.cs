@@ -7,7 +7,7 @@ namespace MSBuildCaseFixer
     {
         private readonly ProjectMetadata _projectMetadata;
 
-        public MSBuildProjectItemMetadata(ProjectMetadata? projectMetadata)
+        public MSBuildProjectItemMetadata(ProjectMetadata projectMetadata)
         {
             _projectMetadata = projectMetadata ?? throw new ArgumentNullException(nameof(projectMetadata));
         }

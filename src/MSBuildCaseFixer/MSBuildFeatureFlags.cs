@@ -26,7 +26,7 @@ namespace MSBuildCaseFixer
             _environmentVariableProvider.SetEnvironmentVariable(MSBuildLoadAllFilesAsReadOnly, "1");
 
             // Skips enumeration of any item that contains wildcards (* or ?) unless it ends in *proj
-            _environmentVariableProvider.SetEnvironmentVariable(MSBuildSkipEagerWildcardEvaluationRegexes, @"[*?]+.*(?<!proj)$");
+            //_environmentVariableProvider.SetEnvironmentVariable(MSBuildSkipEagerWildcardEvaluationRegexes, @"[*?]+.*(?<!proj)$");
 
             // Enables the simple project root element cache
             _environmentVariableProvider.SetEnvironmentVariable(MSBuildUseSimpleProjectRootElementCacheConcurrency, "1");

@@ -1,17 +1,20 @@
 ﻿using Microsoft.Build.Locator;
+using Microsoft.Extensions.FileSystemGlobbing;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
 using System.Reflection;
+using DirectoryInfoWrapper = Microsoft.Extensions.FileSystemGlobbing.Abstractions.DirectoryInfoWrapper;
 
 namespace MSBuildCaseFixer
 {
     /// <summary>
     /// Represents the main logic for the application.
     /// </summary>
-    public static class Program
+    public static partial class Program
     {
         /// <summary>
         /// Gets or sets an <see cref="IEnvironmentVariableProvider" /> to use when manipulating environment variables.
@@ -31,11 +34,12 @@ namespace MSBuildCaseFixer
         /// <summary>
         /// Executes the program with the specified arguments.
         /// </summary>
-        /// <param name="project">The project or solution to load to discover projects that need to be searched.</param>
+        /// <param name="projectGlobs">The project or solution to load to discover projects that need to be searched.</param>
         /// <param name="root">The root directory for your repository.</param>
+        /// <param name="commit"><c>true</c> to commit changes to disk, otherwise <c>false</c>.</param>
         /// <param name="debug">Launch the program under the debugger.</param>
         /// <returns></returns>
-        public static int Main(string project, string root, bool debug)
+        public static int Execute(string projectGlobs, string root, bool commit, bool debug)
         {
             if (debug)
             {
@@ -44,26 +48,27 @@ namespace MSBuildCaseFixer
 
             IFileInfo? msBuildExePath;
 
-            VisualStudioInstance? visualStudioInstance = MSBuildLocator.QueryVisualStudioInstances().FirstOrDefault();
-
-            if (visualStudioInstance?.VisualStudioRootPath == null)
-            {
-                if (!Utility.TryFindOnPath("MSBuild.exe", validator: null, EnvironmentVariableProvider, FileSystem, out msBuildExePath))
-                {
-                    // TODO: Log an error that MSBuild.exe can't be found
-                    return 0;
-                }
-            }
-            else
-            {
-                msBuildExePath = FileSystem.FileInfo.FromFileName(Path.Combine(visualStudioInstance.MSBuildPath, "MSBuild.exe"));
-            }
-
-            Assembly thisAssembly = Assembly.GetExecutingAssembly();
-
             if (AppDomain.CurrentDomain.IsDefaultAppDomain())
             {
-                AppDomain appDomain = AppDomain.CreateDomain(
+                VisualStudioInstance? visualStudioInstance = MSBuildLocator.QueryVisualStudioInstances().FirstOrDefault();
+
+                Assembly thisAssembly = Assembly.GetExecutingAssembly();
+
+                if (visualStudioInstance?.VisualStudioRootPath == null)
+                {
+                    if (!Utility.TryFindOnPath("MSBuild.exe", validator: null, EnvironmentVariableProvider, FileSystem, out msBuildExePath))
+                    {
+                        // TODO: Log an error that MSBuild.exe can't be found
+                        return 0;
+                    }
+                }
+                else
+                {
+                    msBuildExePath = FileSystem.FileInfo.FromFileName(Path.Combine(visualStudioInstance.MSBuildPath, "MSBuild.exe"));
+                }
+                using (MSBuildFeatureFlags.Enable(EnvironmentVariableProvider, msBuildExePath!.FullName))
+                {
+                    AppDomain appDomain = AppDomain.CreateDomain(
                     thisAssembly.FullName,
                     securityInfo: null,
                     info: new AppDomainSetup
@@ -72,17 +77,67 @@ namespace MSBuildCaseFixer
                         ConfigurationFile = Path.Combine(msBuildExePath.DirectoryName!, Path.ChangeExtension(msBuildExePath.Name, ".exe.config")),
                     });
 
-                return appDomain
-                    .ExecuteAssembly(
-                        thisAssembly.Location,
-                        Environment.GetCommandLineArgs().Skip(1).ToArray());
+                    appDomain.SetData(nameof(msBuildExePath), msBuildExePath.FullName);
+
+                    return appDomain
+                        .ExecuteAssembly(
+                            thisAssembly.Location,
+                            Environment.GetCommandLineArgs().Skip(1).ToArray());
+                }
             }
 
-            MSBuildProjectCaseFixer msbuildCaseFixer = new(ProjectLoader, EnvironmentVariableProvider, FileSystem);
+            Console.WriteLine("{0} / {1}", projectGlobs, debug);
 
-            msbuildCaseFixer.FixProjectCase(project, root, msBuildExePath!);
+            List<string> projectPaths = GetProjectPaths(projectGlobs).ToList();
 
-            return 1;
+            MSBuildProjectCaseFixer msbuildCaseFixer = new(ProjectLoader, root, FileSystem);
+
+            msbuildCaseFixer.Run(projectPaths, commit);
+
+            return 0;
+        }
+
+        private static IEnumerable<string> GetProjectPaths(string glob)
+        {
+            Matcher matcher = GetMatcher(glob);
+
+            PatternMatchingResult result = matcher.Execute(new DirectoryInfoWrapper(new DirectoryInfo(Environment.CurrentDirectory)));
+
+            if (result.HasMatches)
+            {
+                foreach (FilePatternMatch file in result.Files)
+                {
+                    yield return file.Path;
+                }
+            }
+
+            Matcher GetMatcher(string path)
+            {
+                string currentDirectory = Environment.CurrentDirectory;
+
+                Matcher matcher = new Matcher();
+
+                char[] splitChars = new char[] { ';', ',' };
+
+                foreach (string? item in path.Split(splitChars).Select(i => i.Trim()))
+                {
+                    if (string.IsNullOrWhiteSpace(item))
+                    {
+                        continue;
+                    }
+
+                    if (item.StartsWith("!", StringComparison.Ordinal))
+                    {
+                        matcher.AddExclude(item.TrimStart('!'));
+                    }
+                    else
+                    {
+                        matcher.AddInclude(item.Replace(currentDirectory, string.Empty));
+                    }
+                }
+
+                return matcher;
+            }
         }
     }
 }

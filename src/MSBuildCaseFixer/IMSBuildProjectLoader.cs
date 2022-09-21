@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace MSBuildCaseFixer
 {
@@ -10,9 +11,11 @@ namespace MSBuildCaseFixer
         /// <summary>
         /// Loads the specified MSBuild project and all of its dependencies.
         /// </summary>
-        /// <param name="path">The path to the project to load.</param>
+        /// <param name="projectPaths">An <see cref="IReadOnlyCollection{T}" /> containing paths to the projects to load.</param>
         /// <param name="globalProperties">A <see cref="IReadOnlyDictionary{TKey, TValue}" /> containing global properties to use when loading the projects.</param>
         /// <returns>A <see cref="IReadOnlyDictionary{TKey, TValue}" /> containing <see cref="IMSBuildProject" /> objects.</returns>
-        IReadOnlyCollection<IMSBuildProject> Load(string path, IReadOnlyDictionary<string, string> globalProperties);
+        IReadOnlyCollection<IMSBuildProject> Load(IReadOnlyCollection<string> projectPaths, IReadOnlyDictionary<string, string> globalProperties);
+
+        event EventHandler<IMSBuildProject> ProjectLoaded;
     }
 }

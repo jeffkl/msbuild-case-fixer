@@ -13,16 +13,18 @@ namespace MSBuildCaseFixer
 {
     internal class MSBuildProjectLoader : IMSBuildProjectLoader
     {
-        public IReadOnlyCollection<IMSBuildProject> Load(string path, IReadOnlyDictionary<string, string> globalProperties)
+        public event EventHandler<IMSBuildProject>? ProjectLoaded;
+
+        public IReadOnlyCollection<IMSBuildProject> Load(IReadOnlyCollection<string> projectPaths, IReadOnlyDictionary<string, string> globalProperties)
         {
             ILogger[] loggers = new ILogger[]
             {
-                new BinaryLogger
-                {
-                    Parameters = "LogFile=msbuild.binlog",
-                    CollectProjectImports = BinaryLogger.ProjectImportsCollectionMode.Embed,
-                    Verbosity = LoggerVerbosity.Diagnostic,
-                },
+                //new BinaryLogger
+                //{
+                //    Parameters = "LogFile=msbuild.binlog",
+                //    CollectProjectImports = BinaryLogger.ProjectImportsCollectionMode.Embed,
+                //    Verbosity = LoggerVerbosity.Diagnostic,
+                //},
             };
 
             using ProjectCollection projectCollection = new ProjectCollection(
@@ -39,20 +41,24 @@ namespace MSBuildCaseFixer
             Dictionary<string, string> projectGraphEntryPointGlobalProperties = globalProperties as Dictionary<string, string>
                 ?? globalProperties.ToDictionary(i => i.Key, i => i.Value, StringComparer.OrdinalIgnoreCase);
 
-            ProjectGraphEntryPoint[] projectGraphEntryPoints = new[]
-            {
-                new ProjectGraphEntryPoint(path, projectGraphEntryPointGlobalProperties),
-            };
+            ProjectGraphEntryPoint[] projectGraphEntryPoints = projectPaths.Select(i => new ProjectGraphEntryPoint(i, projectGraphEntryPointGlobalProperties)).ToArray();
 
             ProjectGraph projectGraph = new ProjectGraph(
                 projectGraphEntryPoints,
                 projectCollection,
-                (projectFullPath, projectGlobalProperties, projectCollectionForProject) => CreateProjectInstance(projectFullPath, projectGlobalProperties, projectCollectionForProject, evaluationContext));
+                (projectFullPath, projectGlobalProperties, projectCollectionForProject) =>
+                {
+                    (Project project, ProjectInstance projectInstance) = CreateProjectInstance(projectFullPath, projectGlobalProperties, projectCollectionForProject, evaluationContext);
+
+                    OnProjectLoaded(project);
+
+                    return projectInstance;
+                });
 
             return new CollectionWrapper<IMSBuildProject, Project>(projectCollection.LoadedProjects, (project) => new MSBuildProject(project));
         }
 
-        private static ProjectInstance CreateProjectInstance(
+        private static (Project Project, ProjectInstance ProjectInstance) CreateProjectInstance(
             string projectPath,
             Dictionary<string, string> globalProperties,
             ProjectCollection projectCollection,
@@ -68,7 +74,12 @@ namespace MSBuildCaseFixer
 
             Project project = Project.FromFile(projectPath, projectOptions);
 
-            return project.CreateProjectInstance(ProjectInstanceSettings.ImmutableWithFastItemLookup, evaluationContext);
+            return (project, project.CreateProjectInstance(ProjectInstanceSettings.ImmutableWithFastItemLookup, evaluationContext));
+        }
+
+        private void OnProjectLoaded(Project project)
+        {
+            ProjectLoaded?.Invoke(this, new MSBuildProject(project));
         }
     }
 }

@@ -10,11 +10,11 @@ namespace MSBuildCaseFixer
 {
     internal static class Utility
     {
-        private static readonly ConcurrentDictionary<FileInfo, Lazy<string?>> _pathCaseCache = new ConcurrentDictionary<FileInfo, Lazy<string?>>(FileInfoFullNameCaseInsensitiveComparer.Instance);
+        private static readonly ConcurrentDictionary<FileInfo, Lazy<string?>> _filePathCache = new ConcurrentDictionary<FileInfo, Lazy<string?>>(FileInfoFullNameCaseInsensitiveComparer.Instance);
 
         private static int _uniqueFilePathCount = 0;
 
-        public static int CacheCount => _pathCaseCache.Count;
+        public static int CacheCount => _filePathCache.Count;
 
         public static int FileCount => _uniqueFilePathCount;
 
@@ -26,9 +26,9 @@ namespace MSBuildCaseFixer
             {
                 FileInfo fileInfo = new FileInfo(Path.Combine(rootPath, path));
 
-                Lazy<string?> lazy = _pathCaseCache.GetOrAdd(
+                Lazy<string?> lazy = _filePathCache.GetOrAdd(
                     fileInfo,
-                    (i) => new Lazy<string?>(() =>
+                    (fileInfo) => new Lazy<string?>(() =>
                     {
                         if (!fileInfo.Exists)
                         {
@@ -37,7 +37,7 @@ namespace MSBuildCaseFixer
                         
                         Interlocked.Increment(ref _uniqueFilePathCount);
 
-                        using (FileStream stream = i.OpenRead())
+                        using (FileStream stream = fileInfo.OpenRead())
                         {
                             StringBuilder stringBuilder = new StringBuilder(NativeMethods.GetFinalPathNameByHandle(stream.SafeFileHandle, lpszFilePath: null, cchFilePath: 0, dwFlags: 0));
 
