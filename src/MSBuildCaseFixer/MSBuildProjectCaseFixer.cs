@@ -15,10 +15,10 @@ namespace MSBuildCaseFixer
         private readonly IFileSystem _fileSystem;
         private readonly IMSBuildProjectLoader _projectLoader;
 
-        private readonly string _root;
+        private readonly IDirectoryInfo _root;
         private ConcurrentDictionary<string, ConcurrentDictionary<string, MSBuildCaseFixerResult>>? _replacementsByFile;
 
-        public MSBuildProjectCaseFixer(IMSBuildProjectLoader projectLoader, string root, IFileSystem fileSystem)
+        public MSBuildProjectCaseFixer(IMSBuildProjectLoader projectLoader, IDirectoryInfo root, IFileSystem fileSystem)
         {
             _projectLoader = projectLoader ?? throw new ArgumentNullException(nameof(projectLoader));
             _root = root;
@@ -99,7 +99,7 @@ namespace MSBuildCaseFixer
                         writer.Close();
                     }
                 }
-                
+
                 saveStopwatch.Stop();
 
                 Console.WriteLine("Done.  {0:N1}s", saveStopwatch.Elapsed.TotalSeconds);
@@ -149,12 +149,12 @@ namespace MSBuildCaseFixer
 
                     unevaluatedChar = unevaluated[--unevaluatedIndex];
 
-                    while(correctedIndex >= 1 && correctedChar != Path.DirectorySeparatorChar)
+                    while (correctedIndex >= 1 && correctedChar != Path.DirectorySeparatorChar)
                     {
                         correctedChar = corrected[--correctedIndex];
                     }
 
-                    if(correctedIndex < 1)
+                    if (correctedIndex < 1)
                     {
                         return false;
                     }
@@ -193,7 +193,7 @@ namespace MSBuildCaseFixer
         {
             foreach (IMSBuildResolvedImport import in msbuildProject.Imports)
             {
-                if (!import.EvaluatedProjectPath.StartsWith(_root))
+                if (!import.EvaluatedProjectPath.StartsWith(_root.FullName))
                 {
                     continue;
                 }
@@ -229,7 +229,7 @@ namespace MSBuildCaseFixer
 
                 if (item.IsImported)
                 {
-                    if (!item.ProjectFullPath.StartsWith(_root))
+                    if (!item.ProjectFullPath.StartsWith(_root.FullName))
                     {
                         continue;
                     }

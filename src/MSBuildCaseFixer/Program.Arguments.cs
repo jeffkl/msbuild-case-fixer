@@ -19,13 +19,6 @@ namespace MSBuildCaseFixer
 
             command.AddArgument(projectArgument);
 
-            Option<string> rootOption = new Option<string>("--root", description: "The root folder of the repository so that imported build files can be updated.")
-            {
-                IsRequired = true
-            };
-
-            command.AddOption(rootOption);
-
             Option<bool> commitOption = new Option<bool>("--commit", description: "Specifies that the changes should be saved.");
 
             command.AddOption(commitOption);
@@ -40,12 +33,11 @@ namespace MSBuildCaseFixer
             int exitCode = 0;
 
             command.SetHandler(
-                (project, root, commit, debug) =>
+                (project, commit, debug) =>
                 {
-                    exitCode = Execute(project, root, commit, debug);
+                    exitCode = Execute(project, commit, debug);
                 },
                 projectArgument,
-                rootOption,
                 commitOption,
                 debugOption);
 

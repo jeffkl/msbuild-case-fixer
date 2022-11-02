@@ -3,11 +3,9 @@ using Microsoft.Extensions.FileSystemGlobbing;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
 using System.Reflection;
-using DirectoryInfoWrapper = Microsoft.Extensions.FileSystemGlobbing.Abstractions.DirectoryInfoWrapper;
 
 namespace MSBuildCaseFixer
 {
@@ -35,11 +33,10 @@ namespace MSBuildCaseFixer
         /// Executes the program with the specified arguments.
         /// </summary>
         /// <param name="projectGlobs">The project or solution to load to discover projects that need to be searched.</param>
-        /// <param name="root">The root directory for your repository.</param>
         /// <param name="commit"><c>true</c> to commit changes to disk, otherwise <c>false</c>.</param>
         /// <param name="debug">Launch the program under the debugger.</param>
         /// <returns></returns>
-        public static int Execute(string projectGlobs, string root, bool commit, bool debug)
+        public static int Execute(string projectGlobs, bool commit, bool debug)
         {
             if (debug)
             {
@@ -64,31 +61,37 @@ namespace MSBuildCaseFixer
                 }
                 else
                 {
-                    msBuildExePath = FileSystem.FileInfo.FromFileName(Path.Combine(visualStudioInstance.MSBuildPath, "MSBuild.exe"));
+                    msBuildExePath = FileSystem.FileInfo.FromFileName(FileSystem.Path.Combine(visualStudioInstance.MSBuildPath, "MSBuild.exe"));
                 }
+
                 using (MSBuildFeatureFlags.Enable(EnvironmentVariableProvider, msBuildExePath!.FullName))
                 {
-                    AppDomain appDomain = AppDomain.CreateDomain(
-                    thisAssembly.FullName,
-                    securityInfo: null,
-                    info: new AppDomainSetup
-                    {
-                        ApplicationBase = msBuildExePath!.DirectoryName,
-                        ConfigurationFile = Path.Combine(msBuildExePath.DirectoryName!, Path.ChangeExtension(msBuildExePath.Name, ".exe.config")),
-                    });
-
-                    appDomain.SetData(nameof(msBuildExePath), msBuildExePath.FullName);
-
-                    return appDomain
+                    return
+                        AppDomain.CreateDomain(
+                            thisAssembly.FullName,
+                            securityInfo: null,
+                            info: new AppDomainSetup
+                            {
+                                ApplicationBase = msBuildExePath!.DirectoryName,
+                                ConfigurationFile = FileSystem.Path.Combine(msBuildExePath.DirectoryName!, FileSystem.Path.ChangeExtension(msBuildExePath.Name, ".exe.config")),
+                            })
                         .ExecuteAssembly(
                             thisAssembly.Location,
                             Environment.GetCommandLineArgs().Skip(1).ToArray());
                 }
             }
 
+            IDirectoryInfo? root = GetRepositoryRoot(FileSystem);
+
+            if (root == null)
+            {
+                // TODO: Log error
+                return 0;
+            }
+
             Console.WriteLine("{0} / {1}", projectGlobs, debug);
 
-            List<string> projectPaths = GetProjectPaths(projectGlobs).ToList();
+            List<string> projectPaths = GetProjectPaths(FileSystem, projectGlobs).ToList();
 
             MSBuildProjectCaseFixer msbuildCaseFixer = new(ProjectLoader, root, FileSystem);
 
@@ -97,11 +100,11 @@ namespace MSBuildCaseFixer
             return 0;
         }
 
-        private static IEnumerable<string> GetProjectPaths(string glob)
+        internal static IEnumerable<string> GetProjectPaths(IFileSystem fileSystem, string glob)
         {
             Matcher matcher = GetMatcher(glob);
 
-            PatternMatchingResult result = matcher.Execute(new DirectoryInfoWrapper(new DirectoryInfo(Environment.CurrentDirectory)));
+            PatternMatchingResult result = matcher.Execute(new MicrosoftExtensionsFileSystemGlobbingAbstractionsDirectoryInfoWrapper(fileSystem.DirectoryInfo.FromDirectoryName(fileSystem.Directory.GetCurrentDirectory())));
 
             if (result.HasMatches)
             {
@@ -113,7 +116,7 @@ namespace MSBuildCaseFixer
 
             Matcher GetMatcher(string path)
             {
-                string currentDirectory = Environment.CurrentDirectory;
+                string currentDirectory = FileSystem.Directory.GetCurrentDirectory();
 
                 Matcher matcher = new Matcher();
 
@@ -138,6 +141,24 @@ namespace MSBuildCaseFixer
 
                 return matcher;
             }
+        }
+
+        internal static IDirectoryInfo? GetRepositoryRoot(IFileSystem fileSystem)
+        {
+            IDirectoryInfo currentDirectory = fileSystem.DirectoryInfo.FromDirectoryName(fileSystem.Directory.GetCurrentDirectory());
+
+            do
+            {
+                if (fileSystem.Directory.Exists(FileSystem.Path.Combine(currentDirectory.FullName, ".git")))
+                {
+                    return currentDirectory;
+                }
+
+                currentDirectory = currentDirectory.Parent;
+            }
+            while (currentDirectory != null);
+
+            return null;
         }
     }
 }
