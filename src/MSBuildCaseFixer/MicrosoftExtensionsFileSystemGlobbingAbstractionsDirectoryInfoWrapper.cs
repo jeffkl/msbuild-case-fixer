@@ -10,7 +10,7 @@ using FileSystemInfoBase = Microsoft.Extensions.FileSystemGlobbing.Abstractions.
 namespace MSBuildCaseFixer
 {
     /// <summary>
-    /// Represents a wrapper of a <see cref="IDirectoryInfo "/> object as a <see cref="DirectoryInfoBase" /> object.
+    /// Represents a wrapper of a <see cref="IDirectoryInfo " /> object as a <see cref="DirectoryInfoBase" /> object.
     /// </summary>
     internal class MicrosoftExtensionsFileSystemGlobbingAbstractionsDirectoryInfoWrapper : DirectoryInfoBase
     {
@@ -32,15 +32,15 @@ namespace MSBuildCaseFixer
         public override string Name => _directoryInfo.Name;
 
         /// <inheritdoc cref="FileSystemInfoBase.ParentDirectory" />
-        public override DirectoryInfoBase ParentDirectory => new MicrosoftExtensionsFileSystemGlobbingAbstractionsDirectoryInfoWrapper(_directoryInfo.Parent);
+        public override DirectoryInfoBase ParentDirectory => new MicrosoftExtensionsFileSystemGlobbingAbstractionsDirectoryInfoWrapper(_directoryInfo.Parent!);
 
         /// <inheritdoc cref="DirectoryInfoBase.EnumerateFileSystemInfos" />
         public override IEnumerable<FileSystemInfoBase> EnumerateFileSystemInfos() => _directoryInfo.EnumerateFiles().Select(i => new MicrosoftExtensionsFileSystemGlobbingAbstractionsFileInfoWrapper(i));
 
         /// <inheritdoc cref="DirectoryInfoBase.GetDirectory(string)" />
-        public override DirectoryInfoBase GetDirectory(string path) => new MicrosoftExtensionsFileSystemGlobbingAbstractionsDirectoryInfoWrapper(_directoryInfo.FileSystem.DirectoryInfo.FromDirectoryName(path));
+        public override DirectoryInfoBase GetDirectory(string path) => new MicrosoftExtensionsFileSystemGlobbingAbstractionsDirectoryInfoWrapper(_directoryInfo.FileSystem.DirectoryInfo.New(path));
 
         /// <inheritdoc cref="DirectoryInfoBase.GetFile(string)" />
-        public override FileInfoBase GetFile(string path) => new MicrosoftExtensionsFileSystemGlobbingAbstractionsFileInfoWrapper(_directoryInfo.FileSystem.FileInfo.FromFileName(path));
+        public override FileInfoBase GetFile(string path) => new MicrosoftExtensionsFileSystemGlobbingAbstractionsFileInfoWrapper(_directoryInfo.FileSystem.FileInfo.New(path));
     }
 }

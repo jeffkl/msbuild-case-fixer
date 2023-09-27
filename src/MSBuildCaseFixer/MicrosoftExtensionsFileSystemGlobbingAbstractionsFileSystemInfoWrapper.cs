@@ -15,9 +15,9 @@ namespace MSBuildCaseFixer
         private readonly IFileInfo _fileInfo;
 
         /// <summary>
-        /// Initializes a new instance for the <see cref="MicrosoftExtensionsFileSystemGlobbingAbstractionsFileInfoWrapper" /> class for the specified <see cref="IFileInfo "/> object.
+        /// Initializes a new instance for the <see cref="MicrosoftExtensionsFileSystemGlobbingAbstractionsFileInfoWrapper" /> class for the specified <see cref="IFileInfo " /> object.
         /// </summary>
-        /// <param name="fileSystemInfo">The <see cref="IFileInfo "/> object to wrap.</param>
+        /// <param name="fileSystemInfo">The <see cref="IFileInfo " /> object to wrap.</param>
         public MicrosoftExtensionsFileSystemGlobbingAbstractionsFileInfoWrapper(IFileInfo fileSystemInfo)
         {
             _fileInfo = fileSystemInfo ?? throw new ArgumentNullException(nameof(fileSystemInfo));
@@ -30,6 +30,6 @@ namespace MSBuildCaseFixer
         public override string Name => _fileInfo.Name;
 
         /// <inheritdoc cref="FileSystemInfoBase.ParentDirectory" />
-        public override DirectoryInfoBase ParentDirectory => new MicrosoftExtensionsFileSystemGlobbingAbstractionsDirectoryInfoWrapper(_fileInfo.Directory);
+        public override DirectoryInfoBase ParentDirectory => new MicrosoftExtensionsFileSystemGlobbingAbstractionsDirectoryInfoWrapper(_fileInfo.Directory!);
     }
 }

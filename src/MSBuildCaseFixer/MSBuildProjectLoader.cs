@@ -4,7 +4,6 @@ using Microsoft.Build.Evaluation.Context;
 using Microsoft.Build.Execution;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Graph;
-using Microsoft.Build.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,6 +12,11 @@ namespace MSBuildCaseFixer
 {
     internal class MSBuildProjectLoader : IMSBuildProjectLoader
     {
+        /// <summary>
+        /// An <see cref="EvaluationContext" /> that is shared between all projects loaded by this instance as an optimization by caching common data.
+        /// </summary>
+        private readonly EvaluationContext _evaluationContext = EvaluationContext.Create(EvaluationContext.SharingPolicy.Shared);
+
         public event EventHandler<IMSBuildProject>? ProjectLoaded;
 
         public IReadOnlyCollection<IMSBuildProject> Load(IReadOnlyCollection<string> projectPaths, IReadOnlyDictionary<string, string> globalProperties)
@@ -36,50 +40,38 @@ namespace MSBuildCaseFixer
                 onlyLogCriticalEvents: false,
                 loadProjectsReadOnly: true);
 
-            EvaluationContext evaluationContext = EvaluationContext.Create(EvaluationContext.SharingPolicy.Shared);
-
             Dictionary<string, string> projectGraphEntryPointGlobalProperties = globalProperties as Dictionary<string, string>
                 ?? globalProperties.ToDictionary(i => i.Key, i => i.Value, StringComparer.OrdinalIgnoreCase);
 
             ProjectGraphEntryPoint[] projectGraphEntryPoints = projectPaths.Select(i => new ProjectGraphEntryPoint(i, projectGraphEntryPointGlobalProperties)).ToArray();
 
-            ProjectGraph projectGraph = new ProjectGraph(
-                projectGraphEntryPoints,
-                projectCollection,
-                (projectFullPath, projectGlobalProperties, projectCollectionForProject) =>
-                {
-                    (Project project, ProjectInstance projectInstance) = CreateProjectInstance(projectFullPath, projectGlobalProperties, projectCollectionForProject, evaluationContext);
-
-                    OnProjectLoaded(project);
-
-                    return projectInstance;
-                });
+            ProjectGraph projectGraph = new ProjectGraph(projectGraphEntryPoints, projectCollection, CreateProjectInstance);
 
             return new CollectionWrapper<IMSBuildProject, Project>(projectCollection.LoadedProjects, (project) => new MSBuildProject(project));
         }
 
-        private static (Project Project, ProjectInstance ProjectInstance) CreateProjectInstance(
-            string projectPath,
-            Dictionary<string, string> globalProperties,
-            ProjectCollection projectCollection,
-            EvaluationContext evaluationContext)
+        /// <summary>
+        /// Creates a <see cref="ProjectInstance" /> for the specified project.
+        /// </summary>
+        /// <param name="projectPath">The full path to the project file to create a <see cref="ProjectInstance" /> for.</param>
+        /// <param name="globalProperties">A <see cref="Dictionary{TKey, TValue}" /> containing global properties to use when creating the project instance.</param>
+        /// <param name="projectCollection">The <see cref="ProjectCollection" /> to load the project under.</param>
+        /// <returns>A <see cref="ProjectInstance" /> for the specified project.</returns>
+        private ProjectInstance CreateProjectInstance(string projectPath, Dictionary<string, string> globalProperties, ProjectCollection projectCollection)
         {
             ProjectOptions projectOptions = new ProjectOptions
             {
-                EvaluationContext = evaluationContext,
+                EvaluationContext = _evaluationContext,
                 GlobalProperties = globalProperties,
                 LoadSettings = ProjectLoadSettings.Default,
-                ProjectCollection = projectCollection
+                ProjectCollection = projectCollection,
             };
 
             Project project = Project.FromFile(projectPath, projectOptions);
 
-            return (project, project.CreateProjectInstance(ProjectInstanceSettings.ImmutableWithFastItemLookup, evaluationContext));
-        }
-
-        private void OnProjectLoaded(Project project)
-        {
             ProjectLoaded?.Invoke(this, new MSBuildProject(project));
+
+            return project.CreateProjectInstance(ProjectInstanceSettings.ImmutableWithFastItemLookup, _evaluationContext);
         }
     }
 }

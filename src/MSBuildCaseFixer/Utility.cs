@@ -34,7 +34,7 @@ namespace MSBuildCaseFixer
                         {
                             return null;
                         }
-                        
+
                         Interlocked.Increment(ref _uniqueFilePathCount);
 
                         using (FileStream stream = fileInfo.OpenRead())
@@ -65,7 +65,7 @@ namespace MSBuildCaseFixer
         /// <param name="environmentVariableProvider">An <see cref="IEnvironmentVariableProvider" /> to use when reading environment variables.</param>
         /// <param name="fileSystem">An <see cref="IFileSystem" /> to use when accessing the file system.</param>
         /// <param name="fileInfo">Receives a <see cref="IFileInfo" /> object with details about the executable if found.</param>
-        /// <returns><code>true</code> if an executable could be found, otherwise <code>false</code>.</returns>
+        /// <returns><see langword="true" /> if an executable could be found, otherwise <see langword="false" />.</returns>
         internal static bool TryFindOnPath(string exe, Func<IFileInfo, bool>? validator, IEnvironmentVariableProvider environmentVariableProvider, IFileSystem fileSystem, out IFileInfo? fileInfo)
         {
             string? pathEnvironmentVariable = environmentVariableProvider.GetEnvironmentVariable("PATH");
@@ -88,7 +88,7 @@ namespace MSBuildCaseFixer
 
                 try
                 {
-                    candidateFileInfo = fileSystem.FileInfo.FromFileName(Path.Combine(entry.Trim(), exe));
+                    candidateFileInfo = fileSystem.FileInfo.New(Path.Combine(entry.Trim(), exe));
                 }
                 catch (Exception)
                 {

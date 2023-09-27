@@ -117,7 +117,7 @@ namespace MSBuildCaseFixer
         /// <param name="unevaluated">An unevaluated value from an MSBuild project.</param>
         /// <param name="corrected">The value in the correct case according to the file system.</param>
         /// <param name="replacement">Receives a replacement value if one is found, otherwise <see cref="string.Empty" />.</param>
-        /// <returns><c>true</c> if a replacement was found, otherwise <c>fasle</c>.</returns>
+        /// <returns><see langword="true" /> if a replacement was found, otherwise <see langword="false" />.</returns>
         internal static bool TryGetReplacement(string unevaluated, string corrected, out string replacement)
         {
             replacement = string.Empty;
@@ -217,7 +217,7 @@ namespace MSBuildCaseFixer
                     new MSBuildCaseFixerResult
                     {
                         CorrectedString = replacement,
-                        ElementLocation = import.GetElementLocation(),
+                        ElementLocation = import.ElementLocation,
                         IncorrectString = import.UnevaluatedProjectPath,
                         ResultType = MSBuildCaseFixerResultType.Import
                     });
@@ -250,7 +250,7 @@ namespace MSBuildCaseFixer
                         new MSBuildCaseFixerResult
                         {
                             CorrectedString = replacement,
-                            ElementLocation = item.GetElementLocation(),
+                            ElementLocation = item.ElementLocation,
                             IncorrectString = item.UnevaluatedInclude,
                             ResultType = MSBuildCaseFixerResultType.Item,
                         });
@@ -282,7 +282,7 @@ namespace MSBuildCaseFixer
                         new MSBuildCaseFixerResult
                         {
                             CorrectedString = replacement,
-                            ElementLocation = item.GetElementLocation(),
+                            ElementLocation = item.ElementLocation,
                             IncorrectString = metadatum.UnevaluatedValue,
                             ResultType = MSBuildCaseFixerResultType.ItemMetadata,
                         });

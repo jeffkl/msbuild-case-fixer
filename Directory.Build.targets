@@ -15,7 +15,7 @@
   <ItemGroup>
     <Content Include="$(MSBuildThisFileDirectory)build\xunit.runner.json"
              CopyToOutputDirectory="PreserveNewest"
-             Condition="'$(IsTestProject)' == 'true'"/>
+             Condition="'$(IsTestProject)' == 'true'" />
     <PackageReference Include="EnvironmentAbstractions.BannedApiAnalyzer" PrivateAssets="All" />
     <AdditionalFiles Include="$(MSBuildThisFileDirectory).editorconfig" Visible="false" />
   </ItemGroup>

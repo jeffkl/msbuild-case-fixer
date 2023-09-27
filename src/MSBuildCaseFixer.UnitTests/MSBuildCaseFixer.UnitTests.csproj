@@ -15,7 +15,4 @@
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
   </ItemGroup>
-  <ItemGroup>
-    <AdditionalFiles Remove="D:\msbuild-case-fixer\build\BannedSymbols.txt" />
-  </ItemGroup>
 </Project>

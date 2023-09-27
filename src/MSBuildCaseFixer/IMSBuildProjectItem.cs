@@ -13,6 +13,11 @@ namespace MSBuildCaseFixer
         IReadOnlyCollection<IMSBuildProjectItemMetadata> DirectMetadata { get; }
 
         /// <summary>
+        /// Gets the element location as a string.
+        /// </summary>
+        string ElementLocation { get; }
+
+        /// <summary>
         /// Gets the evaluted include value for the current item.
         /// </summary>
         string EvaluatedInclude { get; }
@@ -43,7 +48,5 @@ namespace MSBuildCaseFixer
         /// <param name="name">The name of the metadata.</param>
         /// <returns>The evaluated value of the metadata if one exists, otherwise <see cref="string.Empty" />.</returns>
         string GetMetadataValue(string name);
-
-        string GetElementLocation();
     }
 }

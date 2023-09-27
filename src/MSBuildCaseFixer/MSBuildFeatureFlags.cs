@@ -40,7 +40,6 @@ namespace MSBuildCaseFixer
             return new MSBuildFeatureFlags(environmentVariableProvider, msBuildExePath);
         }
 
-        /// <inheritdoc/>
         public void Dispose()
         {
             _environmentVariableProvider.SetEnvironmentVariable(MSBuild_Exe_Path, null);

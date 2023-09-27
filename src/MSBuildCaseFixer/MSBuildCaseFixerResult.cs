@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Concurrent;
-
-namespace MSBuildCaseFixer
+﻿namespace MSBuildCaseFixer
 {
     internal enum MSBuildCaseFixerResultType
     {
@@ -14,22 +11,14 @@ namespace MSBuildCaseFixer
     /// <summary>
     /// Represents a result from analyzing an MSBuild project for a string that is using the incorrect case.
     /// </summary>
-    internal class MSBuildCaseFixerResult
+    internal struct MSBuildCaseFixerResult
     {
-        // Results by full path to project
-        //   Results by string to be replaced
-        //    - Location
-        //    - Replacement
-        //    - Type
+        public string CorrectedString { get; set; }
 
-        private ConcurrentDictionary<string, ConcurrentDictionary<string, MSBuildCaseFixerResult>> replacementsByFile = new ConcurrentDictionary<string, ConcurrentDictionary<string, MSBuildCaseFixerResult>>(StringComparer.OrdinalIgnoreCase);
+        public string ElementLocation { get; set; }
 
-        public string CorrectedString { get; set; } = string.Empty;
+        public string IncorrectString { get; set; }
 
-        public string ElementLocation { get; set; } = string.Empty;
-
-        public string IncorrectString { get; set; } = string.Empty;
-
-        public MSBuildCaseFixerResultType ResultType { get; set; } = MSBuildCaseFixerResultType.None;
+        public MSBuildCaseFixerResultType ResultType { get; set; }
     }
 }

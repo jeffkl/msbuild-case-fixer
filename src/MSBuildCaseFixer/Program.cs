@@ -15,9 +15,9 @@ namespace MSBuildCaseFixer
     public static partial class Program
     {
         /// <summary>
-        /// Gets or sets an <see cref="IEnvironmentVariableProvider" /> to use when manipulating environment variables.
+        /// Gets or sets an <see cref="IEnvironmentProvider" /> to use when manipulating environment variables.
         /// </summary>
-        public static IEnvironmentVariableProvider EnvironmentVariableProvider { get; set; } = SystemEnvironmentVariableProvider.Instance;
+        public static IEnvironmentProvider EnvironmentProvider { get; set; } = SystemEnvironmentProvider.Instance;
 
         /// <summary>
         /// Gets or sets an <see cref="IFileSystem" /> to use when interacting with the file system.
@@ -33,7 +33,7 @@ namespace MSBuildCaseFixer
         /// Executes the program with the specified arguments.
         /// </summary>
         /// <param name="projectGlobs">The project or solution to load to discover projects that need to be searched.</param>
-        /// <param name="commit"><c>true</c> to commit changes to disk, otherwise <c>false</c>.</param>
+        /// <param name="commit"><see langword="true" /> to commit changes to disk, otherwise <see langword="false" />.</param>
         /// <param name="debug">Launch the program under the debugger.</param>
         /// <returns></returns>
         public static int Execute(string projectGlobs, bool commit, bool debug)
@@ -53,7 +53,7 @@ namespace MSBuildCaseFixer
 
                 if (visualStudioInstance?.VisualStudioRootPath == null)
                 {
-                    if (!Utility.TryFindOnPath("MSBuild.exe", validator: null, EnvironmentVariableProvider, FileSystem, out msBuildExePath))
+                    if (!Utility.TryFindOnPath("MSBuild.exe", validator: null, EnvironmentProvider, FileSystem, out msBuildExePath))
                     {
                         // TODO: Log an error that MSBuild.exe can't be found
                         return 0;
@@ -61,10 +61,10 @@ namespace MSBuildCaseFixer
                 }
                 else
                 {
-                    msBuildExePath = FileSystem.FileInfo.FromFileName(FileSystem.Path.Combine(visualStudioInstance.MSBuildPath, "MSBuild.exe"));
+                    msBuildExePath = FileSystem.FileInfo.New(FileSystem.Path.Combine(visualStudioInstance.MSBuildPath, "MSBuild.exe"));
                 }
 
-                using (MSBuildFeatureFlags.Enable(EnvironmentVariableProvider, msBuildExePath!.FullName))
+                using (MSBuildFeatureFlags.Enable(EnvironmentProvider, msBuildExePath!.FullName))
                 {
                     return
                         AppDomain.CreateDomain(
@@ -77,7 +77,7 @@ namespace MSBuildCaseFixer
                             })
                         .ExecuteAssembly(
                             thisAssembly.Location,
-                            Environment.GetCommandLineArgs().Skip(1).ToArray());
+                            EnvironmentProvider.GetCommandLineArgs().Skip(1).ToArray());
                 }
             }
 
@@ -104,7 +104,7 @@ namespace MSBuildCaseFixer
         {
             Matcher matcher = GetMatcher(glob);
 
-            PatternMatchingResult result = matcher.Execute(new MicrosoftExtensionsFileSystemGlobbingAbstractionsDirectoryInfoWrapper(fileSystem.DirectoryInfo.FromDirectoryName(fileSystem.Directory.GetCurrentDirectory())));
+            PatternMatchingResult result = matcher.Execute(new MicrosoftExtensionsFileSystemGlobbingAbstractionsDirectoryInfoWrapper(fileSystem.DirectoryInfo.New(fileSystem.Directory.GetCurrentDirectory())));
 
             if (result.HasMatches)
             {
@@ -145,7 +145,7 @@ namespace MSBuildCaseFixer
 
         internal static IDirectoryInfo? GetRepositoryRoot(IFileSystem fileSystem)
         {
-            IDirectoryInfo currentDirectory = fileSystem.DirectoryInfo.FromDirectoryName(fileSystem.Directory.GetCurrentDirectory());
+            IDirectoryInfo? currentDirectory = fileSystem.DirectoryInfo.New(fileSystem.Directory.GetCurrentDirectory());
 
             do
             {

@@ -2,10 +2,22 @@
 
 namespace MSBuildCaseFixer
 {
-    internal sealed class MSBuildResolvedImport : IMSBuildResolvedImport
+    internal record struct MSBuildResolvedImport : IMSBuildResolvedImport
     {
+        /// <summary>
+        /// Stores the <see cref="ResolvedImport" /> object from the MSBuild project.
+        /// </summary>
         private readonly ResolvedImport _resolvedImport;
 
+        /// <summary>
+        /// Stores the element location as a string.
+        /// </summary>
+        private string? _elementLocation;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MSBuildResolvedImport" /> class.
+        /// </summary>
+        /// <param name="resolvedImport">The <see cref="ResolvedImport" /> from the MSBuild project.</param>
         internal MSBuildResolvedImport(ResolvedImport resolvedImport)
         {
             _resolvedImport = resolvedImport;
@@ -17,6 +29,6 @@ namespace MSBuildCaseFixer
 
         public string UnevaluatedProjectPath => _resolvedImport.ImportingElement.Project;
 
-        public string GetElementLocation() => _resolvedImport.ImportingElement.Location.ToString();
+        public string ElementLocation => _elementLocation ??= _resolvedImport.ImportingElement.Location.ToString();
     }
 }

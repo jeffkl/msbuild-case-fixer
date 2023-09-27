@@ -11,6 +11,11 @@
         string ContainingProject { get; }
 
         /// <summary>
+        /// Gets the location of the element as a string.
+        /// </summary>
+        string ElementLocation { get; }
+
+        /// <summary>
         /// Gets the evaluated full path to the project.
         /// </summary>
         string EvaluatedProjectPath { get; }
@@ -19,11 +24,5 @@
         /// Gets the unevaluated path to the project.
         /// </summary>
         string UnevaluatedProjectPath { get; }
-
-        /// <summary>
-        /// Gets the location of the element as a string.
-        /// </summary>
-        /// <returns>The element location as a string.</returns>
-        string GetElementLocation();
     }
 }
