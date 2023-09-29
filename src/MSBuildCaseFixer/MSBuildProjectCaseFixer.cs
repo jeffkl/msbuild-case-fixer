@@ -25,7 +25,7 @@ namespace MSBuildCaseFixer
             _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
         }
 
-        public void Run(IReadOnlyCollection<string> projectPaths, bool commitChanges)
+        public void Run(IReadOnlyCollection<string> projectPaths, bool commitChanges, bool interactive)
         {
             Stopwatch sw = Stopwatch.StartNew();
 
@@ -36,7 +36,6 @@ namespace MSBuildCaseFixer
             Dictionary<string, string> globalProperties = new Dictionary<string, string>
             {
                 ["ExcludeRestorePackageImports"] = bool.TrueString,
-                ["TraversalTranslateProjectFileItems"] = bool.FalseString,
             };
 
             Stopwatch stopwatch = Stopwatch.StartNew();
@@ -48,7 +47,12 @@ namespace MSBuildCaseFixer
                 ProcessProject(project);
             };
 
-            msbuildProjects = _projectLoader.Load(projectPaths, new Dictionary<string, string>());
+            msbuildProjects = _projectLoader.Load(new MSBuildProjectLoaderOptions
+            {
+                GlobalProperties = globalProperties,
+                Interactive = interactive,
+                ProjectPaths = projectPaths,
+            });
 
             stopwatch.Stop();
 

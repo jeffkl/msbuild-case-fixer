@@ -28,7 +28,7 @@ namespace MSBuildCaseFixer
         {
             _project = project ?? throw new ArgumentNullException(nameof(project));
 
-            _globalPropertiesLazy = new Lazy<IReadOnlyDictionary<string, string>>(() => new ReadOnlyDictionaryWrapper(project.GlobalProperties));
+            _globalPropertiesLazy = new Lazy<IReadOnlyDictionary<string, string>>(() => new ReadOnlyDictionaryWrapper<string, string>(project.GlobalProperties));
         }
 
         public string DirectoryPath => _project.DirectoryPath;

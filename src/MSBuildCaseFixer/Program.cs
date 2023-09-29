@@ -34,9 +34,10 @@ namespace MSBuildCaseFixer
         /// </summary>
         /// <param name="projectGlobs">The project or solution to load to discover projects that need to be searched.</param>
         /// <param name="commit"><see langword="true" /> to commit changes to disk, otherwise <see langword="false" />.</param>
+        /// <param name="interactive"><see langword="true" /> if the user can be prompted interactively, otherwise <see langword="false" /></param>
         /// <param name="debug">Launch the program under the debugger.</param>
         /// <returns></returns>
-        public static int Execute(string projectGlobs, bool commit, bool debug)
+        public static int Execute(string projectGlobs, bool commit, bool interactive, bool debug)
         {
             if (debug)
             {
@@ -66,15 +67,15 @@ namespace MSBuildCaseFixer
 
                 using (MSBuildFeatureFlags.Enable(EnvironmentProvider, msBuildExePath!.FullName))
                 {
-                    return
-                        AppDomain.CreateDomain(
-                            thisAssembly.FullName,
-                            securityInfo: null,
-                            info: new AppDomainSetup
-                            {
-                                ApplicationBase = msBuildExePath!.DirectoryName,
-                                ConfigurationFile = FileSystem.Path.Combine(msBuildExePath.DirectoryName!, FileSystem.Path.ChangeExtension(msBuildExePath.Name, ".exe.config")),
-                            })
+                    return AppDomain.CreateDomain(
+                        "MSBuild Case Fixer",
+                        securityInfo: null,
+                        info: new AppDomainSetup
+                        {
+                            ApplicationBase = msBuildExePath!.DirectoryName,
+                            DisallowCodeDownload = true,
+                            ConfigurationFile = FileSystem.Path.Combine(msBuildExePath.DirectoryName!, FileSystem.Path.ChangeExtension(msBuildExePath.Name, ".exe.config")),
+                        })
                         .ExecuteAssembly(
                             thisAssembly.Location,
                             EnvironmentProvider.GetCommandLineArgs().Skip(1).ToArray());
@@ -95,7 +96,7 @@ namespace MSBuildCaseFixer
 
             MSBuildProjectCaseFixer msbuildCaseFixer = new(ProjectLoader, root, FileSystem);
 
-            msbuildCaseFixer.Run(projectPaths, commit);
+            msbuildCaseFixer.Run(projectPaths, commit, interactive);
 
             return 0;
         }
@@ -120,7 +121,7 @@ namespace MSBuildCaseFixer
 
                 Matcher matcher = new Matcher();
 
-                char[] splitChars = new char[] { ';', ',' };
+                char[] splitChars = new char[] { ';', ',', '|' };
 
                 foreach (string? item in path.Split(splitChars).Select(i => i.Trim()))
                 {

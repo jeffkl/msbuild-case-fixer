@@ -16,9 +16,8 @@ namespace MSBuildCaseFixer
         /// <summary>
         /// Loads the specified MSBuild project and all of its dependencies.
         /// </summary>
-        /// <param name="projectPaths">An <see cref="IReadOnlyCollection{T}" /> containing paths to the projects to load.</param>
-        /// <param name="globalProperties">A <see cref="IReadOnlyDictionary{TKey, TValue}" /> containing global properties to use when loading the projects.</param>
+        /// <param name="options">A <see cref="MSBuildProjectLoaderOptions" /> object with options for how to projects should be loaded.</param>
         /// <returns>A <see cref="IReadOnlyDictionary{TKey, TValue}" /> containing <see cref="IMSBuildProject" /> objects.</returns>
-        IReadOnlyCollection<IMSBuildProject> Load(IReadOnlyCollection<string> projectPaths, IReadOnlyDictionary<string, string> globalProperties);
+        IReadOnlyCollection<IMSBuildProject> Load(MSBuildProjectLoaderOptions options);
     }
 }

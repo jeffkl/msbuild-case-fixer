@@ -23,6 +23,10 @@ namespace MSBuildCaseFixer
 
             command.AddOption(commitOption);
 
+            Option<bool> interactiveOption = new Option<bool>("--interactive", description: "Specifies that the user can be prompted interactively if needed.");
+
+            command.AddOption(interactiveOption);
+
             Option<bool> debugOption = new Option<bool>("--debug")
             {
                 IsHidden = true
@@ -33,12 +37,13 @@ namespace MSBuildCaseFixer
             int exitCode = 0;
 
             command.SetHandler(
-                (project, commit, debug) =>
+                (project, commit, interactive, debug) =>
                 {
-                    exitCode = Execute(project, commit, debug);
+                    exitCode = Execute(project, commit, interactive, debug);
                 },
                 projectArgument,
                 commitOption,
+                interactiveOption,
                 debugOption);
 
             command.Invoke(args);
